@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using Npgsql;
 using практика_2._1.Class;
+using System.Net;
 
 namespace практика_2._1.Model
 {
@@ -159,6 +160,65 @@ namespace практика_2._1.Model
 
                 int i = command.ExecuteNonQuery();
                 if (i == 1) MessageBox.Show("Данные добавлены");
+            }
+            catch (NpgsqlException ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            sqlConnection.Close();
+        }
+
+
+        public void UserUpdate(string firstName, string lastName, string patronymic, DateTime dataOfBirth, string login, string address, string phone)
+        {
+            NpgsqlConnection sqlConnection = new NpgsqlConnection(Connection.connectionStr);
+            try
+            {
+                sqlConnection.Open();
+                string sqlQuery = $"update Users set FirsName = @firstName, LastName = @lastName, Patronymic = @patronymic, DateOfBirthday = @date, Login = @login, Phone = @phone, Adress = @address where UserId = @userId";
+                NpgsqlCommand command = new NpgsqlCommand(sqlQuery, sqlConnection);
+                command.Parameters.AddWithValue("@userId", AuthorizationForm.currentUser.UserId);
+                command.Parameters.AddWithValue("@firstName", firstName);
+                command.Parameters.AddWithValue("@lastName", lastName);
+                command.Parameters.AddWithValue("@patronymic", patronymic);
+                command.Parameters.AddWithValue("@date", dataOfBirth);
+                command.Parameters.AddWithValue("@login", login);
+                command.Parameters.AddWithValue("@phone", phone);
+                command.Parameters.AddWithValue("@address", address);
+                int i = command.ExecuteNonQuery();
+                if (i == 1)
+                {
+                    MessageBox.Show("Данные обновлены");
+                }
+            }
+            catch (NpgsqlException ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            sqlConnection.Close();
+        }
+
+        public void PasswordUpdate(string login, string old_password, string new_password, string repeat_password)
+        {
+            if (new_password != repeat_password)
+            {
+                MessageBox.Show("Пароли не совпадают");
+                return;
+            }
+            string hash_password = Verification.GetSHA512Hash(new_password);
+            NpgsqlConnection sqlConnection = new NpgsqlConnection(Connection.connectionStr);
+            try
+            {
+                sqlConnection.Open();
+                string sqlQuery = $"update Users set Password = @password where UserId = @userId";
+                NpgsqlCommand command = new NpgsqlCommand(sqlQuery, sqlConnection);
+                command.Parameters.AddWithValue("@userId", AuthorizationForm.currentUser.UserId);
+                command.Parameters.AddWithValue("@password", hash_password);
+                int i = command.ExecuteNonQuery();
+                if (i == 1)
+                {
+                    MessageBox.Show("Данные обновлены");
+                }
             }
             catch (NpgsqlException ex)
             {
